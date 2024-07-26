@@ -1,0 +1,48 @@
+---
+- name: Connect to EC2 instance
+  hosts: all-host
+  become: yes
+  tasks:
+    - name: Install Nginx
+      apt:
+        name: nginx
+        state: present
+        update_cache: yes
+
+    - name: Copy Nginx configuration file to /etc/nginx/sites-available/
+      copy:
+        src: "{{ instance_app }}.conf"
+        dest: "/etc/nginx/sites-available/{{ instance_app }}.conf"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Create symlink to /etc/nginx/sites-enabled/
+      file:
+        src: "/etc/nginx/sites-available/{{ instance_app }}.conf"
+        dest: "/etc/nginx/sites-enabled/{{ instance_app }}.conf"
+        state: link
+      notify:
+        - Reload Nginx
+
+    - name: Start and enable Nginx service
+      systemd:
+        name: nginx
+        state: started
+        enabled: yes
+
+    - name: Ensure Nginx is running
+      command: systemctl status nginx
+      register: nginx_status
+      ignore_errors: yes
+
+    - name: Display Nginx status
+      debug:
+        msg: "{{ nginx_status.stdout_lines }}"
+
+  handlers:
+    - name: Reload Nginx
+      systemd:
+        name: nginx
+        state: reloaded
+

@@ -1,0 +1,34 @@
+---
+- name: Clone Git repository on EC2 host
+  hosts: advaya-instance-host  # Change this to your EC2 host group or specific host
+  become: yes  # Use 'become' to run commands with elevated privileges if needed
+  vars_files:
+    - git_credentials.yml
+  vars:
+    #repo_url: "https://github.com/prashantjha09/test-repo.git"
+    branch_name: "main"
+
+  tasks:
+    - name: Ensure git is installed
+      package:
+        name: git
+        state: present
+
+    - name: Check if the repository directory exists
+      stat:
+        path: /home/ubuntu/test-repo
+      register: repo_dir
+
+    - name: Remove the existing repository directory if it exists
+      file:
+        path: /home/ubuntu/test-repo
+        state: absent
+      when: repo_dir.stat.exists
+
+    - name: Clone the Git repository
+      command: >
+        git clone -b main https://{{ git_user }}:{{ git_pass }}@github.com/prashantjha09/test-repo.git 
+      args:
+        chdir: "/home/ubuntu"  # Optional: navigate to a specific directory before cloning
+      environment:
+        GIT_SSL_NO_VERIFY: "true"  # Optional: disable SSL verification if required
