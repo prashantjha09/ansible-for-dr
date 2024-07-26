@@ -8,5 +8,7 @@ git_password: your_password
 
 
 ansible-playbook connect_ec2.yaml
+
 ansible-playbook install-nginx.yaml
+
 ansible-playbook clone.yml --ask-vault-pass
